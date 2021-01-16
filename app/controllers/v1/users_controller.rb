@@ -1,4 +1,5 @@
 class V1::UsersController < ApplicationController
+  before_action :authorized, only: [:auto_login]
   def show 
     user = User.find(params[:id])
     render json: user
@@ -22,6 +23,10 @@ class V1::UsersController < ApplicationController
     else
       render json: { errors: "can't correct email or password"}, status: :forbidden
     end
+  end
+
+  def auto_login 
+    render json: @current_user, adapter: :json
   end
 
   private 
