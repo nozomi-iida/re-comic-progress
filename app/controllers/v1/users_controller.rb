@@ -1,5 +1,12 @@
 class V1::UsersController < ApplicationController
-  before_action :authorized, only: [:auto_login, :update]
+  before_action :authorized, only: [:index, :auto_login, :update, :destroy]
+  before_action :admin_user?, only: [:destroy]
+
+  def index 
+    users = User.page(params[:page])
+    render json: users, adapter: :json
+  end
+
   def show 
     user = User.find(params[:id])
     render json: user
@@ -17,11 +24,16 @@ class V1::UsersController < ApplicationController
 
   def update 
     user = User.find(params[:id])
-    if user.update(user_params)
+    if current_user?(user) && user.update(user_params)
       render json: user, adapter: :json
     else
       render json: { errors: "can't update users" }, status: :forbidden
     end
+  end
+
+  def destroy 
+    User.find(params[:id]).destroy
+    render status: 204
   end
 
   def login 
@@ -39,8 +51,12 @@ class V1::UsersController < ApplicationController
   end
 
   private 
-  
+
   def user_params 
     params.require(:user).permit(:name, :email, :password, :password_confirmation)
+  end
+
+  def admin_user?
+    render json: { error: "this user is not admin user" }, status: :forbidden unless @current_user.admin?
   end
 end

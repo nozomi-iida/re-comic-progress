@@ -13,6 +13,24 @@ RSpec.describe "V1::Users", type: :request do
     return { "Authorization" => "Bearer #{ token }" }
   end
 
+  describe "GET /v1/users" do
+    subject(:request) { get v1_users_path, headers: set_header(user.id) }
+    let(:user) { create(:user) }
+    let!(:users) { create_list(:user, 10) } 
+
+    it "should not view" do 
+      get v1_users_path
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "should view" do
+      request
+      expect(response).to have_http_status(:ok)
+      parsed_body = JSON.parse(response.body)
+      expect(parsed_body["users"].count).to eq 11
+    end
+  end
+
   describe "POST /v1/users" do 
     subject(:request) { post v1_users_path( params: params ) }
     let(:params) { { user: attributes_for(:user) } }
@@ -64,16 +82,52 @@ RSpec.describe "V1::Users", type: :request do
     let(:user) { create(:user) }
     let(:params) { { user: { name: "Remi" } } }
 
-    # it "should not edit" do 
-    #   user = create(:user)
-    #   other_user = create(:user)
-    #   patch v1_user_path(other_user.id), params: params, headers: set_header(user.id)
-    #   expect(response).to have_http_status(:forbidden)
-    # end
-
     it "should edit" do 
       request
       expect(response).to have_http_status(:ok)
+      parsed_body = JSON.parse(response.body)
+      expect(parsed_body["user"]["name"]).to eq("Remi")
+    end
+
+    it "should not edit with invalid email" do 
+      user = create(:user)
+      patch v1_user_path(user.id), params: { user: { email: "test@invalid" } }, headers: set_header(user.id)
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "should not edit with different" do
+      user = create(:user)
+      other_user = create(:user)
+      patch v1_user_path(other_user.id), params: { user: { email: "test@invalid" } }, headers: set_header(user.id)
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "should not edit admin" do
+      user = create(:user)
+      patch v1_user_path(user.id), params: { user: { admin: true } }, headers: set_header(user.id)
+      parsed_body = JSON.parse(response.body)
+      expect(parsed_body["user"]["admin"]).to eq(false)
+    end
+  end
+
+  describe "DELETE v1/user" do 
+    it "should destroy" do
+      admin_user = create(:admin_user)
+      user = create(:user)
+      expect { delete v1_user_path(user.id), headers: set_header(admin_user.id) }.to change(User, :count).by(-1)
+      expect(response).to have_http_status(204)
+    end
+
+    it "should not destroy" do
+      user = create(:user)
+      delete v1_user_path(user.id)
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "should not destroy with not admin" do 
+      user = create(:user)
+      delete v1_user_path(user.id), headers: set_header(user.id)
+      expect(response).to have_http_status(:forbidden)
     end
   end
 end
