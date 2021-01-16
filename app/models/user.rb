@@ -8,4 +8,10 @@ class User < ApplicationRecord
   validates_confirmation_of :password
   # qa: why this pass test
   validates :password, presence: false, length: { minimum: 6 }
+
+  def User.digest(string)
+    cost = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST :
+                                                  BCrypt::Engine.cost
+    BCrypt::Password.create(string, cost: cost)
+  end
 end
