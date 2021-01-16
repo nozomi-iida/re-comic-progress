@@ -1,5 +1,4 @@
 class User < ApplicationRecord
-  attr_accessor :remember_token
   before_save { email.downcase! }
   validates :name, presence: true, length: { maximum: 50 }
   VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
@@ -7,8 +6,8 @@ class User < ApplicationRecord
 
   has_secure_password
   validates_confirmation_of :password
-  # qa: why this pass test
-  validates :password, presence: false, length: { minimum: 6 }
+  # qa: when this comment out, why pass test
+  validates :password, presence: false, length: { minimum: 6 }, allow_nil: true
 
   class << self
     def digest(string)

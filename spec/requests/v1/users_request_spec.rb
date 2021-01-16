@@ -8,6 +8,11 @@ RSpec.describe "V1::Users", type: :request do
     JWT.encode(payload, Rails.application.secrets.secret_key_base, "HS256")
   end
 
+  def set_header(user_id)
+    token = encode_token(user_id)
+    return { "Authorization" => "Bearer #{ token }" }
+  end
+
   describe "POST /v1/users" do 
     subject(:request) { post v1_users_path( params: params ) }
     let(:params) { { user: attributes_for(:user) } }
@@ -47,10 +52,28 @@ RSpec.describe "V1::Users", type: :request do
     it "'s status should authorize" do 
       user = create(:user)
       token = encode_token(user.id)
-      get v1_auto_login_path, headers: {"Authorization" => "Bearer #{ token }"}
+      get v1_auto_login_path, headers: { "Authorization" => "Bearer #{ token }" }
       expect(response).to have_http_status(:ok)
       parsed_body = JSON.parse(response.body)
       expect(parsed_body["user"]["id"]).to eq user.id
+    end
+  end
+
+  describe "PATCH /v1/users" do
+    subject(:request) { patch v1_user_path(user.id), params: params, headers: set_header(user.id) }
+    let(:user) { create(:user) }
+    let(:params) { { user: { name: "Remi" } } }
+
+    # it "should not edit" do 
+    #   user = create(:user)
+    #   other_user = create(:user)
+    #   patch v1_user_path(other_user.id), params: params, headers: set_header(user.id)
+    #   expect(response).to have_http_status(:forbidden)
+    # end
+
+    it "should edit" do 
+      request
+      expect(response).to have_http_status(:ok)
     end
   end
 end
