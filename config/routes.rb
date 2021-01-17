@@ -4,6 +4,6 @@ Rails.application.routes.draw do
     post "/login", to: "users#login"
     get "/auto_login", to: "users#auto_login"
     resources :account_activations, only: [:edit]
-    resources :password_resets, only: [:create, :edit, :update]
+    resources :password_resets, only: [:create, :update]
   end
 end
