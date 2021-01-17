@@ -59,4 +59,8 @@ RSpec.describe User, type: :model do
     user.password = user.password_confirmation = "" * 5
     expect(user.valid?).to be false
   end
+
+  it "should return false without token" do 
+    expect(user.digest?(:activation, "")).to be false
+  end
 end

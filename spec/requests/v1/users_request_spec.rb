@@ -1,6 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe "V1::Users", type: :request do
+  before do 
+    ActionMailer::Base.deliveries.clear
+  end
 
   def encode_token(user_id)
     expires_in = 1.month.from_now.to_i
@@ -41,6 +44,7 @@ RSpec.describe "V1::Users", type: :request do
 
     it "should sign up" do 
       expect{ request }.to change(User, :count).by(+1)
+      expect(ActionMailer::Base.deliveries.size).to eq 1
       expect(response).to have_http_status(:created)
     end
   end
@@ -55,9 +59,17 @@ RSpec.describe "V1::Users", type: :request do
       expect(response).to have_http_status(:forbidden)
     end
 
+    it "should not log in with unactivated user" do 
+      unactivated_user = create(:unactivated_user)
+      post v1_login_path( params: { email: "unactivated@test.com", password: "password" } )
+      expect(response).to have_http_status(:forbidden)
+    end
+
     it "should log in", :skip => true do 
       request
       expect(response).to have_http_status(:ok)
+      parsed_body = JSON.parse(response.body)
+      expect(parsed_body["user"]["activated"]).to be true
     end
   end
 

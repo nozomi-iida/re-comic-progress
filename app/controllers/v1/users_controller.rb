@@ -3,7 +3,7 @@ class V1::UsersController < ApplicationController
   before_action :admin_user?, only: [:destroy]
 
   def index 
-    users = User.page(params[:page])
+    users = User.where(activated: true).page(params[:page])
     render json: users, adapter: :json
   end
 
@@ -15,8 +15,8 @@ class V1::UsersController < ApplicationController
   def create 
     user = User.new(user_params)
     if user.save
-      token = encode_token(user.id)
-      render json: user, meta: { token: token }, status: :created, adapter: :json
+      user.send_activation_email
+      render json: { message: "Check your email for the activation link." }, status: :created
     else
       render json: { errors: "can't sign up" }, status: :forbidden
     end
@@ -39,8 +39,12 @@ class V1::UsersController < ApplicationController
   def login 
     user = User.find_by(email: params[:email].downcase)
     if user && user.authenticate(params[:password])
-      token = encode_token(user.id)
-      render json: user, meta: { token: token }, adapter: :json
+      if user.activated?
+        token = encode_token(user.id)
+        render json: user, meta: { token: token }, adapter: :json
+      else
+        render json: { message: "Check your email for the activation link." }, status: :forbidden
+      end
     else
       render json: { errors: "can't correct email or password"}, status: :forbidden
     end

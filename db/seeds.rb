@@ -1,7 +1,10 @@
 User.create(name: "AdminUser",
             email: "admin@test.com",
             password: "password",
-            password_confirmation: "password"
+            password_confirmation: "password",
+            admin: true,
+            activated: true,
+            activated_at: Time.zone.now
            )
 
 20.times do |n|
@@ -11,6 +14,9 @@ User.create(name: "AdminUser",
   User.create!(name: name,
                email: email,
                password: password,
-               password_confirmation: password
+               password_confirmation: password,
+               admin: false,
+               activated: true,
+               activated_at: Time.zone.now
               )
 end
