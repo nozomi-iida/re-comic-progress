@@ -63,4 +63,12 @@ RSpec.describe User, type: :model do
   it "should return false without token" do 
     expect(user.digest?(:activation, "")).to be false
   end
+
+  it "assoceated comics should be destroyed" do 
+    user.save
+    user.comics.create!(title: "should removed", volume: 1)
+    expect do 
+      user.destroy 
+    end.to change(Comic, :count).by(-1)
+  end
 end

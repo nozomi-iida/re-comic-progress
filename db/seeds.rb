@@ -20,3 +20,12 @@ User.create(name: "AdminUser",
                activated_at: Time.zone.now
               )
 end
+
+users = User.order(:created_at).take(6)
+
+30.times do |n|
+  title = "test #{n}comics"
+  volume = n
+  users.each{ |user| user.comics.create!(title: title, volume: volume) }
+
+end

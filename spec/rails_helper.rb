@@ -64,4 +64,15 @@ RSpec.configure do |config|
   RSpec.configure do |config|
     config.include FactoryBot::Syntax::Methods
   end  
+
+  def encode_token(user_id)
+    expires_in = 1.month.from_now.to_i
+    payload = { user_id: user_id, exp: expires_in} 
+    JWT.encode(payload, Rails.application.secrets.secret_key_base, "HS256")
+  end
+
+  def set_header(user_id)
+    token = encode_token(user_id)
+    return { "Authorization" => "Bearer #{ token }" }
+  end
 end

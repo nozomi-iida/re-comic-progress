@@ -5,17 +5,6 @@ RSpec.describe "V1::Users", type: :request do
     ActionMailer::Base.deliveries.clear
   end
 
-  def encode_token(user_id)
-    expires_in = 1.month.from_now.to_i
-    payload = { user_id: user_id, exp: expires_in} 
-    JWT.encode(payload, Rails.application.secrets.secret_key_base, "HS256")
-  end
-
-  def set_header(user_id)
-    token = encode_token(user_id)
-    return { "Authorization" => "Bearer #{ token }" }
-  end
-
   describe "GET /v1/users" do
     subject(:request) { get v1_users_path, headers: set_header(user.id) }
     let(:user) { create(:user) }
@@ -31,6 +20,18 @@ RSpec.describe "V1::Users", type: :request do
       expect(response).to have_http_status(:ok)
       parsed_body = JSON.parse(response.body)
       expect(parsed_body["users"].count).to eq 11
+    end
+  end
+
+  describe "GET /v1/usrs"  do
+    subject(:request) { get v1_user_path(user.id), headers: set_header(user.id) }
+    let(:user) { create(:user) do |user| create_list(:comic, 5, user: user) end }
+    it "should view" do
+      request
+      expect(response).to have_http_status(:ok)
+      parsed_body = JSON.parse(response.body)
+      expect(parsed_body["admin"]).to eq (false)
+      expect(parsed_body["comics"].count).to eq 5
     end
   end
 
